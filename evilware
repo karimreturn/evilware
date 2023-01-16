@@ -1,0 +1,423 @@
+local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "evilware",
+   LoadingTitle = "evilware is loading",
+   LoadingSubtitle = "by karims_return#0001",
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = nil, -- Create a custom folder for your hub/game
+      FileName = "karims hub"
+   },
+   Discord = {
+      Enabled = false,
+      Invite = "https://discord.gg/V75QhpTjNF", -- The Discord invite code, do not include discord.gg/
+      RememberJoins = true -- Set this to false to make them join the discord every time they load it up
+   },
+   KeySystem = true, -- Set this to true to use our key system
+   KeySettings = {
+      Title = "Your key!",
+      Subtitle = "Key System",
+      Note = "Join the discord (https://discord.gg/V75QhpTjNF)",
+      FileName = "KarimsKey",
+      SaveKey = true,
+      GrabKeyFromSite = false, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
+      Key = "4bYEXNr3nd"
+   }
+})
+
+local Tab = Window:CreateTab("Main", 4483362458) -- Title, Image
+
+local Button = Tab:CreateButton({
+   Name = "EvilWare Lock",
+   Callback = function()
+   getgenv().OldAimPart = "UpperTorso"
+getgenv().AimPart = "Head" 
+    getgenv().AimlockKey = "c"
+    getgenv().AimRadius = 7.22
+    getgenv().ThirdPerson = true 
+    getgenv().FirstPerson = true
+    getgenv().TeamCheck = false 
+    getgenv().PredictMovement = true
+    getgenv().PredictionVelocity = 25
+    getgenv().CheckIfJumped = true
+    getgenv().Smoothness = true
+    getgenv().SmoothnessAmount = 0.04721
+
+    local Players, Uis, RService, SGui = game:GetService"Players", game:GetService"UserInputService", game:GetService"RunService", game:GetService"StarterGui";
+    local Client, Mouse, Camera, CF, RNew, Vec3, Vec2 = Players.LocalPlayer, Players.LocalPlayer:GetMouse(), workspace.CurrentCamera, CFrame.new, Ray.new, Vector3.new, Vector2.new;
+    local Aimlock, MousePressed, CanNotify = true, false, false;
+    local AimlockTarget;
+    local OldPre;
+    
+
+    
+    getgenv().WorldToViewportPoint = function(P)
+        return Camera:WorldToViewportPoint(P)
+    end
+    
+    getgenv().WorldToScreenPoint = function(P)
+        return Camera.WorldToScreenPoint(Camera, P)
+    end
+    
+    getgenv().GetObscuringObjects = function(T)
+        if T and T:FindFirstChild(getgenv().AimPart) and Client and Client.Character:FindFirstChild("Head") then 
+            local RayPos = workspace:FindPartOnRay(RNew(
+                T[getgenv().AimPart].Position, Client.Character.Head.Position)
+            )
+            if RayPos then return RayPos:IsDescendantOf(T) end
+        end
+    end
+    
+    getgenv().GetNearestTarget = function()
+        local players = {}
+        local PLAYER_HOLD  = {}
+        local DISTANCES = {}
+        for i, v in pairs(Players:GetPlayers()) do
+            if v ~= Client then
+                table.insert(players, v)
+            end
+        end
+        for i, v in pairs(players) do
+            if v.Character ~= nil then
+                local AIM = v.Character:FindFirstChild("Head")
+                if getgenv().TeamCheck == true and v.Team ~= Client.Team then
+                    local DISTANCE = (v.Character:FindFirstChild("Head").Position - game.Workspace.CurrentCamera.CFrame.p).magnitude
+                    local RAY = Ray.new(game.Workspace.CurrentCamera.CFrame.p, (Mouse.Hit.p - game.Workspace.CurrentCamera.CFrame.p).unit * DISTANCE)
+                    local HIT,POS = game.Workspace:FindPartOnRay(RAY, game.Workspace)
+                    local DIFF = math.floor((POS - AIM.Position).magnitude)
+                    PLAYER_HOLD[v.Name .. i] = {}
+                    PLAYER_HOLD[v.Name .. i].dist= DISTANCE
+                    PLAYER_HOLD[v.Name .. i].plr = v
+                    PLAYER_HOLD[v.Name .. i].diff = DIFF
+                    table.insert(DISTANCES, DIFF)
+                elseif getgenv().TeamCheck == false and v.Team == Client.Team then 
+                    local DISTANCE = (v.Character:FindFirstChild("Head").Position - game.Workspace.CurrentCamera.CFrame.p).magnitude
+                    local RAY = Ray.new(game.Workspace.CurrentCamera.CFrame.p, (Mouse.Hit.p - game.Workspace.CurrentCamera.CFrame.p).unit * DISTANCE)
+                    local HIT,POS = game.Workspace:FindPartOnRay(RAY, game.Workspace)
+                    local DIFF = math.floor((POS - AIM.Position).magnitude)
+                    PLAYER_HOLD[v.Name .. i] = {}
+                    PLAYER_HOLD[v.Name .. i].dist= DISTANCE
+                    PLAYER_HOLD[v.Name .. i].plr = v
+                    PLAYER_HOLD[v.Name .. i].diff = DIFF
+                    table.insert(DISTANCES, DIFF)
+                end
+            end
+        end
+        
+        if unpack(DISTANCES) == nil then
+            return nil
+        end
+        
+        local L_DISTANCE = math.floor(math.min(unpack(DISTANCES)))
+        if L_DISTANCE > getgenv().AimRadius then
+            return nil
+        end
+        
+        for i, v in pairs(PLAYER_HOLD) do
+            if v.diff == L_DISTANCE then
+                return v.plr
+            end
+        end
+        return nil
+    end
+    
+    Mouse.KeyDown:Connect(function(a)
+        if not (Uis:GetFocusedTextBox()) then 
+            if a == AimlockKey and AimlockTarget == nil then
+                pcall(function()
+                    if MousePressed ~= true then MousePressed = true end 
+                    local Target;Target = GetNearestTarget()
+                    if Target ~= nil then 
+                        AimlockTarget = Target
+                    end
+                end)
+            elseif a == AimlockKey and AimlockTarget ~= nil then
+                if AimlockTarget ~= nil then AimlockTarget = nil end
+                if MousePressed ~= false then 
+                    MousePressed = false 
+                end
+            end
+        end
+    end)
+    
+    RService.RenderStepped:Connect(function()
+        if getgenv().ThirdPerson == true and getgenv().FirstPerson == true then 
+            if (Camera.Focus.p - Camera.CoordinateFrame.p).Magnitude > 1 or (Camera.Focus.p - Camera.CoordinateFrame.p).Magnitude <= 1 then 
+                CanNotify = true 
+            else 
+                CanNotify = false 
+            end
+        elseif getgenv().ThirdPerson == true and getgenv().FirstPerson == false then 
+            if (Camera.Focus.p - Camera.CoordinateFrame.p).Magnitude > 1 then 
+                CanNotify = true 
+            else 
+                CanNotify = false 
+            end
+        elseif getgenv().ThirdPerson == false and getgenv().FirstPerson == true then 
+            if (Camera.Focus.p - Camera.CoordinateFrame.p).Magnitude <= 1 then 
+                CanNotify = true 
+            else 
+                CanNotify = false 
+            end
+        end
+        if Aimlock == true and MousePressed == true then 
+            if AimlockTarget and AimlockTarget.Character and AimlockTarget.Character:FindFirstChild(getgenv().AimPart) then 
+                if getgenv().FirstPerson == true then
+                    if CanNotify == true then
+                        if getgenv().PredictMovement == true then
+                            if getgenv().Smoothness == true then
+                                --// The part we're going to lerp/smoothen \\--
+                                local Main = CF(Camera.CFrame.p, AimlockTarget.Character[getgenv().AimPart].Position + AimlockTarget.Character[getgenv().AimPart].Velocity/PredictionVelocity)
+                                
+                                --// Making it work \\--
+                                Camera.CFrame = Camera.CFrame:Lerp(Main, getgenv().SmoothnessAmount, Enum.EasingStyle.Elastic, Enum.EasingDirection.InOut)
+                            else
+                                Camera.CFrame = CF(Camera.CFrame.p, AimlockTarget.Character[getgenv().AimPart].Position + AimlockTarget.Character[getgenv().AimPart].Velocity/PredictionVelocity)
+                            end
+                        elseif getgenv().PredictMovement == false then 
+                            if getgenv().Smoothness == true then
+                                --// The part we're going to lerp/smoothen \\--
+                                local Main = CF(Camera.CFrame.p, AimlockTarget.Character[getgenv().AimPart].Position)
+
+                                --// Making it work \\--
+                                Camera.CFrame = Camera.CFrame:Lerp(Main, getgenv().SmoothnessAmount, Enum.EasingStyle.Elastic, Enum.EasingDirection.InOut)
+                            else
+                                Camera.CFrame = CF(Camera.CFrame.p, AimlockTarget.Character[getgenv().AimPart].Position)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+         if CheckIfJumped == true then
+       if AimlockTarget.Character.HuDDDDDDDDDDWmanoid.FloorMaterial == Enum.Material.Air then
+    
+           getgenv().AimPart = "UpperTorso"
+       else
+         getgenv().AimPart = getgenv().OldAimPart
+
+       end
+    end
+end)
+
+   end,
+})
+
+local Button = Tab:CreateButton({
+   Name = "Far Silent Aim",
+   Callback = function()
+   -- // Dependencies
+_G.PRED = 0.025
+local Aiming = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ezucii/new/main/sourceeeeeeeeeeeeee.lua"))()
+Aiming.TeamCheck(false)
+Aiming.ShowFOV = false
+Aiming.FOV = 8
+-- // Services
+local Workspace = game:GetService("Workspace")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+-- // Vars
+local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
+local CurrentCamera = Workspace.CurrentCamera
+
+local DaHoodSettings = {
+    SilentAim = true,
+    AimLock = false,
+    Prediction = 0.025,
+    AimLockKeybind = Enum.KeyCode.E
+}
+getgenv().DaHoodSettings = DaHoodSettings
+
+-- // Overwrite to account downed
+function Aiming.Check()
+    -- // Check A
+    if not (Aiming.Enabled == true and Aiming.Selected ~= LocalPlayer and Aiming.SelectedPart ~= nil) then
+        return false
+    end
+
+    -- // Check if downed
+    local Character = Aiming.Character(Aiming.Selected)
+    local KOd = Character:WaitForChild("BodyEffects")["K.O"].Value
+    local Grabbed = Character:FindFirstChild("GRABBING_CONSTRAINT") ~= nil
+
+    -- // Check B
+    if (KOd or Grabbed) then
+        return false
+    end
+
+    -- //
+    return true
+end
+
+-- // Hook
+local __index
+__index = hookmetamethod(game, "__index", function(t, k)
+    -- // Check if it trying to get our mouse's hit or target and see if we can use it
+    if (t:IsA("Mouse") and (k == "Hit" or k == "Target") and Aiming.Check()) then
+        -- // Vars
+        local SelectedPart = Aiming.SelectedPart
+
+        -- // Hit/Target
+        if (DaHoodSettings.SilentAim and (k == "Hit" or k == "Target")) then
+            -- // Hit to account prediction
+            local Hit = SelectedPart.CFrame + (SelectedPart.Velocity * DaHoodSettings.Prediction)
+
+            -- // Return modded val
+            return (k == "Hit" and Hit or SelectedPart)
+        end
+    end
+
+    -- // Return
+    return __index(t, k)
+end)
+
+local player = game.Players.LocalPlayer
+local mouse = player:GetMouse()
+
+mouse.KeyDown:Connect(function(key)
+    if key == "v" then
+        if Aiming.Enabled == false then
+        Aiming.Enabled = true
+        else
+        Aiming.Enabled = false
+        end
+    end
+end)
+
+
+RunService.RenderStepped:Connect(function()
+
+    local ping = game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValueString()
+    local Value = tostring(ping)
+    local pingValue = Value:split(" ")
+    local PingNumber = pingValue[1]
+    
+    DaHoodSettings.Prediction = PingNumber / 1000 + _G.PRED
+    
+                    if Aiming.Character.Humanoid.Jump == true and AimlockTarget.Character.Humanoid.FloorMaterial == Enum.Material.Air then
+                    Aiming.TargetPart = "RightFoot"
+                else
+                    Aiming.Character:WaitForChild("Humanoid").StateChanged:Connect(function(new)
+                    
+                    if new == Enum.HumanoidStateType.Freefall then
+                    Aiming.TargetPart = "RightFoot"
+                    else
+                    
+                    Aiming.TargetPart = Aiming.SelectedPart
+                    
+                    end
+                    
+                    end)
+                    
+                end
+
+end)
+   end,
+})
+
+local Tab = Window:CreateTab("other", 4483362458) -- Title, Image
+
+
+
+local Button = Tab:CreateButton({
+   Name = "bypass for admin fly",
+   Callback = function()
+   hookfunction(game.Players.LocalPlayer.IsInGroup, function() return true end)
+   end,
+})
+
+
+local Button = Tab:CreateButton({
+   Name = "admin fly",
+   Callback = function()
+   loadstring(game:HttpGet("https://raw.githubusercontent.com/22kristina/swag/main/admin_fly"))()
+   end,
+})
+
+
+
+local Button = Tab:CreateButton({
+   Name = "Headless/Korblox",
+   Callback = function()
+   local L_393_ = game.Players.LocalPlayer.Character
+    local L_394_ = L_393_:WaitForChild("Head")
+    local L_395_ = L_394_:WaitForChild("face")
+    L_395_.Transparency = 1 --Texture = "rbxassetid://209712379"
+    L_394_.Transparency = 1
+    local L_396_ = game.Players.LocalPlayer.Character
+    local L_397_ = game.Players.LocalPlayer.Character
+    local L_398_ = L_396_.Head
+    local L_399_ = L_398_.face
+    local L_400_ = L_397_.RightFoot
+    local L_401_ = L_397_.RightLowerLeg
+    local L_402_ = L_397_.RightUpperLeg
+    local L_403_ = L_397_.LeftFoot
+    local L_404_ = L_397_.LeftLowerLeg
+    local L_405_ = L_397_.LeftUpperLeg
+    L_400_.MeshId = "http://www.roblox.com/asset/?id=902942093"
+    L_401_.MeshId = "http://www.roblox.com/asset/?id=902942093"
+    L_402_.MeshId = "http://www.roblox.com/asset/?id=902942096"
+    L_402_.TextureID = "http://roblox.com/asset/?id=902843398"
+    L_400_.Transparency = 1
+    L_401_.Transparency = 1
+   end,
+})
+
+
+local Tab = Window:CreateTab("anti locks", 4483362458) -- Title, Image
+
+local Button = Tab:CreateButton({
+   Name = "sky aa",
+   Callback = function()
+  getgenv().Sky = true 
+getgenv().SkyAmount = 825
+
+game:GetService("RunService").heartbeat:Connect(function()
+    if getgenv().Sky ~= false then 
+    local vel = game.Players.LocalPlayer.Character.HumanoidRootPart.Velocity
+    game.Players.LocalPlayer.Character.HumanoidRootPart.Velocity = Vector3.new(0,      getgenv().SkyAmount,0) 
+    game:GetService("RunService").RenderStepped:Wait()
+    game.Players.LocalPlayer.Character.HumanoidRootPart.Velocity = vel
+    end 
+end)
+   end,
+})
+
+local Button = Tab:CreateButton({
+   Name = "Underground aa",
+   Callback = function()
+   local Toggled = true
+local KeyCode = 'v'
+
+
+function AA()
+    local oldVelocity = game.Players.LocalPlayer.Character.HumanoidRootPart.Velocity
+    game.Players.LocalPlayer.Character.HumanoidRootPart.Velocity = Vector3.new(oldVelocity.X, -70, oldVelocity.Z)
+    game.Players.LocalPlayer.Character.HumanoidRootPart.Velocity = Vector3.new(oldVelocity.X, oldVelocity.Y, oldVelocity.Z)
+    game.Players.LocalPlayer.Character.HumanoidRootPart.Velocity = Vector3.new(oldVelocity.X, -70, oldVelocity.Z)
+    game.Players.LocalPlayer.Character.Humanoid.HipHeight = 4.14
+end
+
+game:GetService('UserInputService').InputBegan:Connect(function(Key)
+    if Key.KeyCode == Enum.KeyCode[KeyCode:upper()] and not game:GetService('UserInputService'):GetFocusedTextBox() then
+        if Toggled then
+            Toggled = false
+            game.Players.LocalPlayer.Character.Humanoid.HipHeight = 1.85
+
+        elseif not Toggled then
+            Toggled = true
+
+            while Toggled do
+                AA()
+                task.wait()
+            end
+        end
+    end
+end)
+   end,
+})
+
